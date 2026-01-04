@@ -50,22 +50,28 @@ function configureGitRemoteWithToken(repoPath, sshUrl) {
  */
 function runClaude(cwd, prompt, printMode = false) {
   return new Promise((resolve, reject) => {
-    const args = ['--dangerously-skip-permissions'];
+    // Options pour bypass les prompts interactifs
+    const args = [
+      '--dangerously-skip-permissions',
+    ];
 
     if (printMode) {
-      args.push('--print');
+      args.push('-p', prompt);
+    } else {
+      args.push(prompt);
     }
-
-    args.push(prompt);
 
     logInfo(`Running Claude Code CLI in ${cwd} (print mode: ${printMode})`);
     logDebug(`Prompt length: ${prompt.length} chars`);
 
     const claude = spawn('claude', args, {
       cwd,
-      shell: true,
       timeout: config.CLAUDE_TIMEOUT_MS,
-      env: { ...process.env },
+      env: {
+        ...process.env,
+        CI: '1',
+        NONINTERACTIVE: '1',
+      },
     });
 
     let stdout = '';

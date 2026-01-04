@@ -35,7 +35,8 @@ Toutes les variables sont configurables via `config.js` ou variables d'environne
 
 | Variable | Défaut | Description |
 |----------|--------|-------------|
-| `GITHUB_TOKEN` | `""` | Token GitHub pour merger les PR |
+| `GITHUB_TOKEN` | `""` | Token GitHub pour push Git et merger les PR |
+| `BOT_API_TOKEN` | `nexusbuild-bot-secret` | Token pour authentification API NexusBuild |
 | `NEXUSBUILD_API` | `http://localhost:3001/api` | URL de l'API NexusBuild |
 | `NEXUSBUILD_REPO_PATH` | `/home/arnaud/sdk/nexusbuild-web` | Chemin vers le repo NexusBuild |
 | `STORAGE_REPOS` | `/home/arnaud/sdk/nexusbuild-web/storage/repos` | Dossier des repos clonés |
@@ -43,6 +44,17 @@ Toutes les variables sont configurables via `config.js` ou variables d'environne
 | `MAX_ITERATIONS` | `5` | Nombre max de tentatives par build |
 | `CLAUDE_TIMEOUT_MS` | `300000` | Timeout Claude CLI (5 min) |
 | `POLL_INTERVAL_MS` | `10000` | Intervalle de polling (10 sec) |
+
+### Tokens requis
+
+```bash
+# Token GitHub (PAT Classic avec permission "repo")
+# https://github.com/settings/tokens
+export GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxx"
+
+# Token API NexusBuild (doit matcher celui côté serveur)
+export BOT_API_TOKEN="nexusbuild-bot-secret"
+```
 
 ## Exécution
 
@@ -180,3 +192,45 @@ DEBUG=true node index.js
 - Les logs sont tronqués au dernier tiers pour éviter les prompts trop longs
 - Le timeout par défaut pour Claude est de 5 minutes
 - Maximum 5 tentatives de correction par build échoué
+
+## ⚠️ Configuration pour automatisation complète
+
+Claude Code CLI peut demander une confirmation "workspace trust" même avec `--dangerously-skip-permissions`. Pour une automatisation complète sans interaction :
+
+### Option 1 : Pré-approuver les workspaces manuellement
+
+Exécuter le script de setup une fois avant de lancer le bot :
+
+```bash
+chmod +x setup-trusted-dirs.sh
+./setup-trusted-dirs.sh
+```
+
+Ou manuellement :
+```bash
+# Trust le répertoire NexusBuild
+cd /home/arnaud/sdk/nexusbuild-web
+claude --dangerously-skip-permissions -p "OK"
+# Répondre "yes" au prompt workspace trust
+```
+
+### Option 2 : Configurer ~/.claude/settings.json
+
+Ajouter les répertoires dans le fichier de configuration Claude :
+
+```json
+{
+  "trustedDirectories": [
+    "/home/arnaud/sdk/nexusbuild-web",
+    "/home/arnaud/sdk/nexusbuild-web/storage/repos"
+  ]
+}
+```
+
+### Option 3 : Utiliser l'API Anthropic directement
+
+Pour éviter complètement les prompts interactifs, remplacer Claude CLI par des appels directs à l'API Anthropic avec `@anthropic-ai/sdk`. Cette approche nécessite de réimplémenter la logique de lecture/écriture de fichiers.
+
+### Problème connu
+
+Les repos d'apps sont clonés dynamiquement dans `/storage/repos/[BUILD_ID]/`. Chaque nouveau build crée un nouveau dossier qui pourrait nécessiter une approbation. La solution 2 (trusted directories parent) devrait résoudre ce problème.

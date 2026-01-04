@@ -39,8 +39,10 @@ async function healthCheck() {
 async function listBuilds() {
   try {
     const response = await api.get('/builds');
-    logDebug(`Listed ${response.data.length || 0} builds`);
-    return response.data || [];
+    // L'API peut retourner { success, count, builds: [] } ou un tableau direct
+    const builds = response.data.builds || response.data || [];
+    logDebug(`Listed ${builds.length || 0} builds`);
+    return builds;
   } catch (error) {
     logError('Failed to list builds', error);
     throw error;
