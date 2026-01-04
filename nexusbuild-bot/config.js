@@ -7,6 +7,9 @@ module.exports = {
   // Token GitHub pour l'API (merge PR, vérification push)
   GITHUB_TOKEN: process.env.GITHUB_TOKEN || '',
 
+  // Token pour l'API NexusBuild (authentification bot)
+  BOT_API_TOKEN: process.env.BOT_API_TOKEN || 'nexusbuild-bot-secret',
+
   // URL de base de l'API NexusBuild
   NEXUSBUILD_API: process.env.NEXUSBUILD_API || 'http://localhost:3001/api',
 

@@ -23,6 +23,7 @@ logInfo(`Poll Interval: ${config.POLL_INTERVAL_MS}ms`);
 logInfo(`Max Iterations: ${config.MAX_ITERATIONS}`);
 logInfo(`Claude Timeout: ${config.CLAUDE_TIMEOUT_MS}ms`);
 logInfo(`GitHub Token: ${config.GITHUB_TOKEN ? 'configured' : 'NOT configured'}`);
+logInfo(`Bot API Token: ${config.BOT_API_TOKEN ? 'configured' : 'NOT configured'}`);
 logInfo('=================================================');
 
 // Gestion des signaux pour arrêt propre
