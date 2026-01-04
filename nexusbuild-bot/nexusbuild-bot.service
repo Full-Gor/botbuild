@@ -1,0 +1,28 @@
+[Unit]
+Description=NexusBuild Bot - Mobile Build Automation
+Documentation=https://github.com/your-org/nexusbuild-bot
+After=network.target
+
+[Service]
+Type=simple
+User=arnaud
+Group=arnaud
+WorkingDirectory=/home/arnaud/nexusbuild-bot
+ExecStart=/usr/bin/node /home/arnaud/nexusbuild-bot/index.js
+Restart=on-failure
+RestartSec=10
+
+# Variables d'environnement
+Environment=NODE_ENV=production
+Environment=GITHUB_TOKEN=
+
+# Logs
+StandardOutput=append:/var/log/nexusbuild-bot/stdout.log
+StandardError=append:/var/log/nexusbuild-bot/stderr.log
+
+# Limites
+LimitNOFILE=65536
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
