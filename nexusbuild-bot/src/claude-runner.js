@@ -3,9 +3,43 @@
  * Lance Claude Code CLI et parse les réponses
  */
 
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const config = require('../config');
-const { logInfo, logError, logDebug, extractLastThirdOfLogs, parseClaudeDiagnostic } = require('./utils');
+const { logInfo, logError, logDebug, extractLastThirdOfLogs, parseClaudeDiagnostic, sshToHttpsWithToken } = require('./utils');
+
+/**
+ * Configure le remote Git pour utiliser HTTPS avec token (permet le push)
+ * @param {string} repoPath - Chemin vers le repo
+ * @param {string} sshUrl - URL SSH originale du repo
+ * @returns {boolean} True si configuré avec succès
+ */
+function configureGitRemoteWithToken(repoPath, sshUrl) {
+  const token = config.GITHUB_TOKEN;
+
+  if (!token) {
+    logDebug('No GitHub token configured, keeping SSH remote (requires SSH key)');
+    return false;
+  }
+
+  const httpsUrl = sshToHttpsWithToken(sshUrl, token);
+  if (!httpsUrl) {
+    logError(`Could not convert SSH URL to HTTPS: ${sshUrl}`);
+    return false;
+  }
+
+  try {
+    // Changer le remote origin pour utiliser HTTPS avec token
+    execSync(`git remote set-url origin "${httpsUrl}"`, {
+      cwd: repoPath,
+      stdio: 'pipe',
+    });
+    logInfo(`Configured git remote with HTTPS token for push`);
+    return true;
+  } catch (error) {
+    logError('Failed to configure git remote', error);
+    return false;
+  }
+}
 
 /**
  * Exécute une commande Claude Code CLI
@@ -137,10 +171,16 @@ ${lastThirdLogs}`;
  * Corrige un problème dans l'application mobile
  * @param {string} repoPath - Chemin vers le repo de l'app clonée
  * @param {string} logs - Logs du build échoué
+ * @param {string} [repositoryUrl] - URL SSH du repo (pour configurer le push avec token)
  * @returns {Promise<boolean>} True si la correction a réussi
  */
-async function fixAppIssue(repoPath, logs) {
+async function fixAppIssue(repoPath, logs, repositoryUrl = null) {
   const lastThirdLogs = extractLastThirdOfLogs(logs);
+
+  // Configurer le remote avec le token si disponible
+  if (repositoryUrl) {
+    configureGitRemoteWithToken(repoPath, repositoryUrl);
+  }
 
   const prompt = `Voici les logs d'erreur de build d'une app mobile. Analyse et corrige le problème puis commit et push sur la branche d'origine. Ne crée PAS de Pull Request, push directement.
 
@@ -163,6 +203,7 @@ ${lastThirdLogs}`;
 
 module.exports = {
   runClaude,
+  configureGitRemoteWithToken,
   diagnoseBuildFailure,
   fixBuilderIssue,
   fixAppIssue,

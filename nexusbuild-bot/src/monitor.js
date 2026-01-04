@@ -125,7 +125,7 @@ async function processFailedBuild(build, originalBuildId = null) {
       const repoPath = path.join(config.STORAGE_REPOS, buildId);
       logInfo(`App repo path: ${repoPath}`);
 
-      fixSuccess = await claudeRunner.fixAppIssue(repoPath, logs);
+      fixSuccess = await claudeRunner.fixAppIssue(repoPath, logs, build.repository);
 
       if (fixSuccess) {
         // Attendre un peu pour laisser le temps au push

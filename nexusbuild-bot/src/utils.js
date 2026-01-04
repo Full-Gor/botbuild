@@ -137,6 +137,20 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Convertit une URL SSH GitHub en URL HTTPS avec token
+ * @param {string} sshUrl - URL SSH (git@github.com:user/repo.git)
+ * @param {string} token - Token GitHub
+ * @returns {string|null} URL HTTPS avec token ou null si échec
+ */
+function sshToHttpsWithToken(sshUrl, token) {
+  const repoInfo = parseGitSshUrl(sshUrl);
+  if (!repoInfo || !token) {
+    return null;
+  }
+  return `https://${token}@github.com/${repoInfo.owner}/${repoInfo.repo}.git`;
+}
+
 module.exports = {
   logInfo,
   logError,
@@ -145,5 +159,6 @@ module.exports = {
   extractLastThirdOfLogs,
   parseClaudeDiagnostic,
   parseGitSshUrl,
+  sshToHttpsWithToken,
   sleep,
 };
